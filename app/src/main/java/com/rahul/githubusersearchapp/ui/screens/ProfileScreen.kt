@@ -293,10 +293,7 @@ fun StatItem(
 ) {
     Column(
         modifier = modifier
-            .clickable(
-                indication = rememberRipple(),
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
+            .clickable{
                 onClick()
             }
             .padding(8.dp),

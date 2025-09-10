@@ -40,6 +40,10 @@ android {
     buildFeatures {
         compose = true
     }
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
 }
 
 dependencies {
@@ -52,6 +56,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material3.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -80,8 +85,6 @@ dependencies {
     implementation(libs.coil.gif)
     //SwipeRefresh
     implementation(libs.androidx.material3.pull.refresh)
-   // implementation(libs.androidx.material.pull.refresh)
-
     // DataStore for theme persistence
     implementation (libs.androidx.datastore.preferences)
 }

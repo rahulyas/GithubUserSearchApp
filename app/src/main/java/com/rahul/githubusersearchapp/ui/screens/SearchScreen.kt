@@ -1,7 +1,5 @@
 package com.rahul.githubusersearchapp.ui.screens
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -35,16 +32,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -73,10 +69,7 @@ fun SearchScreen(
     val userState by viewModel.userState.collectAsState()
     val similarUsersState by viewModel.similarUsersState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
-  /*  val pullRefreshState = rememberPullToRefreshState(
-        refreshing = isRefreshing,
-        onRefresh = { viewModel.refreshData() }
-    )*/
+
 
 
     Scaffold(
@@ -147,35 +140,43 @@ fun SearchScreen(
                     }
                 }
                 is UserState.Success -> {
-                    LazyColumn {
-                        item {
-                            UserProfilePreview(
-                                user = state.user,
-                                onViewProfile = {
-                                    navController.navigate(Screen.Profile.createRoute(state.user.login))
-                                }
-                            )
-                        }
-
-                        // Show similar users below the main result
-                        if (similarUsersState is SimilarUsersState.Success && (similarUsersState as SimilarUsersState.Success).users.isNotEmpty()) {
+                    val pullRefreshState = rememberPullToRefreshState()
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = { viewModel.resetUserState() },
+                        state = pullRefreshState,
+                        modifier = Modifier.fillMaxSize()
+                    ){
+                        LazyColumn {
                             item {
-                                Spacer(modifier = Modifier.height(24.dp))
-                                Text(
-                                    text = "Similar Users",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(bottom = 12.dp)
-                                )
-                            }
-                            items((similarUsersState as SimilarUsersState.Success).users) { user ->
-                                SimilarUserItem(
-                                    user = user,
-                                    onClick = {
-                                        navController.navigate(Screen.Profile.createRoute(user.login))
+                                UserProfilePreview(
+                                    user = state.user,
+                                    onViewProfile = {
+                                        navController.navigate(Screen.Profile.createRoute(state.user.login))
                                     }
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+
+                            // Show similar users below the main result
+                            if (similarUsersState is SimilarUsersState.Success && (similarUsersState as SimilarUsersState.Success).users.isNotEmpty()) {
+                                item {
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                    Text(
+                                        text = "Similar Users",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(bottom = 12.dp)
+                                    )
+                                }
+                                items((similarUsersState as SimilarUsersState.Success).users) { user ->
+                                    SimilarUserItem(
+                                        user = user,
+                                        onClick = {
+                                            navController.navigate(Screen.Profile.createRoute(user.login))
+                                        }
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
                             }
                         }
                     }
@@ -200,7 +201,8 @@ fun DarkModeToggle(mainViewModel: MainViewModel) {
     ) {
         Icon(
             painter = if (isDarkMode) painterResource(id = R.drawable.baseline_light_mode_24) else painterResource(id = R.drawable.baseline_dark_mode_24),
-            contentDescription = if (isDarkMode) "Switch to Light Mode" else "Switch to Dark Mode"
+            contentDescription = if (isDarkMode) "Switch to Light Mode" else "Switch to Dark Mode",
+            tint = if (isDarkMode) Color.Yellow else Color.Unspecified
         )
     }
 }
@@ -240,11 +242,8 @@ fun SimilarUserItem(
 ) {
     Card(
         modifier = modifier
-            .fillMaxWidth()
-            .clickable(
-                indication = rememberRipple(),
-                interactionSource = remember { MutableInteractionSource() }
-            ) { onClick() },
+            .fillMaxWidth(),
+        onClick = onClick,
         shape = MaterialTheme.shapes.small
     ) {
         Row(
